@@ -2,16 +2,33 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <title>太空单词听写大冒险 🚀</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-  html, body { width: 100%; height: 100%; overflow-x: hidden; font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; color: #e6f0ff; background: #050714; }
-  body { min-height: 100vh; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; min-height: 100%; font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; color: #e6f0ff; background: #050714; }
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  /* IMPORTANT: inputs must always be tappable on mobile */
+  input, textarea, [contenteditable] {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -webkit-touch-callout: default;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+  }
+  button { touch-action: manipulation; cursor: pointer; }
 
   /* ===== Space background ===== */
   .space-bg {
-    position: fixed; inset: 0; z-index: 0;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
       radial-gradient(ellipse at 25% 60%, rgba(120, 60, 255, 0.55) 0%, rgba(20, 0, 60, 0) 55%),
       radial-gradient(ellipse at 75% 35%, rgba(60, 120, 255, 0.55) 0%, rgba(0, 20, 60, 0) 55%),
@@ -38,7 +55,7 @@
   @keyframes twinkle { 0%,100% { opacity: 0.85; } 50% { opacity: 0.45; } }
   @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-600px); } }
   .galaxy {
-    position: absolute; width: 280px; height: 280px; border-radius: 50%;
+    position: absolute; width: 280px; height: 280px; border-radius: 50%; pointer-events: none;
     background: radial-gradient(circle, rgba(150, 200, 255, 0.55) 0%, rgba(100, 60, 220, 0.3) 30%, transparent 70%);
     filter: blur(3px); animation: spin 30s linear infinite;
   }
@@ -49,11 +66,11 @@
   /* ===== Layout ===== */
   .screen {
     position: relative; z-index: 5;
-    width: 100%; min-height: 100vh;
+    width: 100%; min-height: 100vh; min-height: 100dvh;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px;
+    padding: 24px 18px;
   }
-  .screen.scroll { justify-content: flex-start; padding-top: 40px; padding-bottom: 40px; }
+  .screen.scroll { justify-content: flex-start; padding-top: 30px; padding-bottom: 40px; }
   .hidden { display: none !important; }
 
   /* ===== Cards ===== */
@@ -61,52 +78,57 @@
     background: rgba(15, 20, 55, 0.78);
     border: 2px solid rgba(120, 180, 255, 0.5);
     border-radius: 22px;
-    padding: 32px 36px;
+    padding: 28px 26px;
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 0 40px rgba(100, 120, 255, 0.35), inset 0 0 30px rgba(80, 100, 220, 0.15);
     max-width: 760px; width: 100%;
   }
   .title {
-    font-size: 34px; font-weight: 900; text-align: center;
+    font-size: 30px; font-weight: 900; text-align: center;
     background: linear-gradient(90deg, #7ad7ff, #b78bff, #ff7ad0);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     text-shadow: 0 0 30px rgba(180, 140, 255, 0.4);
     margin-bottom: 8px; letter-spacing: 1px;
   }
-  .subtitle { text-align: center; opacity: 0.85; margin-bottom: 22px; font-size: 15px; }
+  .subtitle { text-align: center; opacity: 0.85; margin-bottom: 22px; font-size: 15px; line-height: 1.5; }
   .field { margin-bottom: 16px; }
   .field label { display: block; margin-bottom: 6px; font-size: 14px; opacity: 0.9; }
   input[type="text"], textarea {
-    width: 100%; padding: 12px 14px; border-radius: 12px;
+    width: 100%; padding: 14px 14px; border-radius: 12px;
     background: rgba(8, 12, 35, 0.85);
     border: 2px solid rgba(120, 180, 255, 0.45);
-    color: #fff; font-size: 15px; font-family: inherit;
-    outline: none; transition: all 0.2s; user-select: text;
+    color: #fff; font-size: 16px; /* >= 16px prevents iOS zoom-in */
+    font-family: inherit;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    line-height: 1.4;
   }
   input[type="text"]:focus, textarea:focus { border-color: #7ad7ff; box-shadow: 0 0 15px rgba(120, 215, 255, 0.5); }
-  textarea { min-height: 200px; resize: vertical; font-family: "Menlo", "Consolas", monospace; font-size: 14px; line-height: 1.7; }
+  textarea { min-height: 180px; resize: vertical; font-family: "Menlo", "Consolas", monospace; font-size: 15px; line-height: 1.7; }
   .btn {
-    padding: 12px 24px; border-radius: 12px; border: none;
+    padding: 14px 22px; border-radius: 12px; border: none;
     background: linear-gradient(135deg, #6b8aff, #b56bff);
-    color: white; font-size: 15px; font-weight: 700; cursor: pointer;
+    color: white; font-size: 16px; font-weight: 700; cursor: pointer;
     box-shadow: 0 6px 20px rgba(140, 100, 255, 0.45);
     transition: transform 0.12s, box-shadow 0.2s; font-family: inherit;
+    min-height: 48px; /* touch-friendly */
   }
   .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(140, 100, 255, 0.65); }
   .btn:active { transform: translateY(0); }
   .btn.secondary { background: linear-gradient(135deg, #2a3060, #4a3070); }
   .btn.danger { background: linear-gradient(135deg, #c0395a, #8a2848); }
-  .btn.small { padding: 8px 14px; font-size: 13px; border-radius: 9px; box-shadow: 0 3px 10px rgba(140, 100, 255, 0.35); }
-  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
-  .helper { font-size: 12px; opacity: 0.65; margin-top: 6px; }
+  .btn.small { padding: 10px 14px; font-size: 13px; border-radius: 9px; min-height: 40px; box-shadow: 0 3px 10px rgba(140, 100, 255, 0.35); }
+  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .helper { font-size: 12px; opacity: 0.65; margin-top: 6px; line-height: 1.5; }
   .helper.warn { color: #ffb070; opacity: 0.95; }
   .helper.ok { color: #7adba0; opacity: 0.95; }
   .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .chip {
-    padding: 7px 12px; border-radius: 999px;
+    padding: 10px 14px; border-radius: 999px;
     background: rgba(120, 180, 255, 0.15);
     border: 1px solid rgba(120, 180, 255, 0.45);
-    color: #cfe6ff; font-size: 13px; cursor: pointer; transition: all 0.15s;
+    color: #cfe6ff; font-size: 14px; cursor: pointer; transition: all 0.15s;
+    min-height: 40px; touch-action: manipulation;
   }
   .chip:hover { background: rgba(120, 180, 255, 0.3); transform: translateY(-1px); }
 
@@ -123,14 +145,6 @@
   .book-card .book-meta { font-size: 12px; opacity: 0.75; margin-bottom: 10px; }
   .book-card .book-badge { font-size: 11px; opacity: 0.85; color: #ffd66b; }
   .book-card .book-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .book-card.empty {
-    border-style: dashed; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 130px; opacity: 0.85;
-  }
-  .book-card.empty:hover { opacity: 1; }
-  .book-card.empty .plus { font-size: 38px; margin-bottom: 4px; }
-
   .preset-section {
     margin-top: 18px; padding-top: 18px;
     border-top: 1px dashed rgba(120, 180, 255, 0.3);
@@ -145,64 +159,69 @@
   .file-drop {
     margin-bottom: 14px;
     border: 2px dashed rgba(120, 180, 255, 0.5);
-    border-radius: 12px; padding: 14px;
-    text-align: center; font-size: 13px;
+    border-radius: 12px; padding: 16px;
+    text-align: center; font-size: 14px;
     background: rgba(8, 12, 35, 0.4);
     transition: all 0.2s; cursor: pointer;
+    min-height: 60px;
   }
   .file-drop:hover, .file-drop.drag { background: rgba(80, 130, 255, 0.15); border-color: #7ad7ff; }
   .file-drop input { display: none; }
 
   /* ===== Game HUD ===== */
-  .game-screen { padding: 0; min-height: 100vh; }
+  .game-screen { padding: 0; min-height: 100vh; min-height: 100dvh; }
   .hud {
     position: absolute; top: 0; left: 0; right: 0;
     display: flex; justify-content: space-between; align-items: flex-start;
-    padding: 18px 26px; z-index: 10; pointer-events: none;
+    padding: 14px 16px; z-index: 10; pointer-events: none;
   }
   .hud-left, .hud-right { display: flex; flex-direction: column; gap: 4px; }
   .hud-right { align-items: flex-end; }
   .player-name {
-    font-size: 15px; font-weight: 700;
-    background: rgba(15, 20, 55, 0.6); padding: 5px 12px; border-radius: 999px;
+    font-size: 14px; font-weight: 700;
+    background: rgba(15, 20, 55, 0.7); padding: 5px 10px; border-radius: 999px;
     border: 1px solid rgba(120, 180, 255, 0.4);
   }
   .book-tag {
     font-size: 12px; opacity: 0.85; color: #ffd66b;
-    background: rgba(15, 20, 55, 0.4); padding: 3px 10px; border-radius: 999px;
+    background: rgba(15, 20, 55, 0.5); padding: 3px 10px; border-radius: 999px;
     border: 1px solid rgba(255, 214, 107, 0.35);
-    margin-top: 4px;
+    margin-top: 4px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .hearts { display: flex; gap: 4px; font-size: 26px; filter: drop-shadow(0 0 6px rgba(255, 80, 100, 0.7)); }
+  .hearts { display: flex; gap: 3px; font-size: 22px; filter: drop-shadow(0 0 6px rgba(255, 80, 100, 0.7)); }
   .hearts .gone { opacity: 0.22; filter: grayscale(1); }
-  .score-line { font-size: 13px; opacity: 0.8; }
-  .score-big { font-size: 30px; font-weight: 900; text-shadow: 0 0 12px rgba(180, 140, 255, 0.6); }
+  .score-line { font-size: 12px; opacity: 0.8; }
+  .score-big { font-size: 26px; font-weight: 900; text-shadow: 0 0 12px rgba(180, 140, 255, 0.6); }
   .combo {
-    position: absolute; bottom: 18px; left: 26px; z-index: 10;
-    font-size: 22px; font-weight: 800; color: #7ad7ff;
+    position: absolute; bottom: 14px; left: 16px; z-index: 10;
+    font-size: 18px; font-weight: 800; color: #7ad7ff;
     text-shadow: 0 0 14px rgba(120, 215, 255, 0.7);
+    pointer-events: none;
   }
   .progress {
     position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-    z-index: 10; font-size: 13px; opacity: 0.75;
-    background: rgba(15, 20, 55, 0.55); padding: 4px 12px; border-radius: 999px;
+    z-index: 10; font-size: 12px; opacity: 0.75;
+    background: rgba(15, 20, 55, 0.6); padding: 4px 12px; border-radius: 999px;
+    pointer-events: none;
   }
 
   /* Falling word area */
-  .play-area { position: absolute; inset: 0; overflow: hidden; z-index: 3; }
+  .play-area { position: absolute; inset: 0; overflow: hidden; z-index: 3; pointer-events: none; }
   .meteor {
     position: absolute; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none;
   }
   .meteor-hint {
-    font-size: 26px; font-weight: 700; color: #ffe9a8;
+    font-size: 22px; font-weight: 700; color: #ffe9a8;
     text-shadow: 0 0 14px rgba(255, 200, 80, 0.5);
-    background: rgba(15, 20, 55, 0.55); padding: 8px 18px; border-radius: 12px;
+    background: rgba(15, 20, 55, 0.65); padding: 8px 16px; border-radius: 12px;
     border: 1px solid rgba(255, 220, 140, 0.45);
     white-space: nowrap;
+    max-width: 90vw;
   }
   .meteor-rock {
-    width: 70px; height: 70px; border-radius: 50%;
+    width: 60px; height: 60px; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ff9a6b, #b53a1a 60%, #4a1505);
     box-shadow: 0 0 30px rgba(255, 140, 80, 0.7), inset -8px -8px 14px rgba(0,0,0,0.5);
     animation: tumble 3s linear infinite; position: relative;
@@ -218,55 +237,65 @@
 
   /* Ship */
   .ship {
-    position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
-    z-index: 4; width: 70px; height: 90px;
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    z-index: 4; width: 60px; height: 80px; pointer-events: none;
     filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.8));
   }
   .ship-flame {
-    position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-    width: 24px; height: 36px;
+    position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 32px; pointer-events: none;
     background: linear-gradient(to top, rgba(255,200,80,0), #ffcc44 30%, #ff5b1b 70%);
-    border-radius: 50%; filter: blur(3px);
+    border-radius: 50%; filter: blur(3px); z-index: 4;
     animation: flicker 0.15s ease-in-out infinite alternate;
   }
   @keyframes flicker { from { transform: translateX(-50%) scaleY(1); opacity: 0.85; } to { transform: translateX(-50%) scaleY(1.3); opacity: 1; } }
 
   /* Type input */
   .type-bar {
-    position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%);
-    z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px;
-    width: min(640px, 90%);
+    position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%);
+    z-index: 20; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    width: min(640px, 92%);
   }
-  .typed-display { display: flex; gap: 6px; min-height: 56px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .typed-display { display: flex; gap: 5px; min-height: 50px; align-items: center; justify-content: center; flex-wrap: wrap; pointer-events: none; }
   .letter-slot {
-    width: 36px; height: 48px;
-    background: rgba(15, 20, 55, 0.55);
+    width: 32px; height: 44px;
+    background: rgba(15, 20, 55, 0.7);
     border: 2px solid rgba(120, 180, 255, 0.4);
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 26px; font-weight: 800; color: #fff;
+    font-size: 24px; font-weight: 800; color: #fff;
     text-transform: uppercase; transition: all 0.12s;
   }
   .letter-slot.correct { background: rgba(80, 220, 130, 0.35); border-color: #50dc82; color: #c5ffe0; box-shadow: 0 0 12px rgba(80, 220, 130, 0.5); }
   .letter-slot.current { border-color: #ffd66b; box-shadow: 0 0 14px rgba(255, 214, 107, 0.6); }
   .type-input {
-    width: 100%; padding: 14px 18px; text-align: center;
-    background: rgba(15, 20, 55, 0.7);
-    border: 2px solid rgba(120, 180, 255, 0.5);
+    width: 100%; padding: 16px 18px; text-align: center;
+    background: rgba(15, 20, 55, 0.85);
+    border: 2px solid rgba(120, 180, 255, 0.7);
     border-radius: 14px; color: #fff;
     font-size: 22px; font-weight: 700; letter-spacing: 4px; font-family: inherit;
-    outline: none; text-transform: lowercase; user-select: text;
+    outline: none; text-transform: lowercase;
+    min-height: 56px;
+    box-shadow: 0 0 22px rgba(120, 215, 255, 0.35);
   }
-  .type-input:focus { border-color: #7ad7ff; box-shadow: 0 0 18px rgba(120, 215, 255, 0.55); }
+  .type-input:focus { border-color: #7ad7ff; box-shadow: 0 0 22px rgba(120, 215, 255, 0.7); }
+
+  /* Tap-to-focus overlay (mobile aid) */
+  .tap-hint {
+    margin-top: 4px;
+    font-size: 12px; opacity: 0.75;
+    color: #ffd66b;
+  }
 
   /* Floating feedback */
   .float-msg {
     position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
-    z-index: 20;
-    font-size: 44px; font-weight: 900;
+    z-index: 25;
+    font-size: 36px; font-weight: 900;
     pointer-events: none; opacity: 0;
     text-shadow: 0 0 18px currentColor;
     animation: floatUp 1.2s ease-out forwards;
+    text-align: center;
   }
   @keyframes floatUp {
     0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
@@ -276,20 +305,21 @@
   .float-msg.good { color: #50dc82; }
   .float-msg.bad  { color: #ff6b8a; }
 
-  .particle { position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 15; }
+  .particle { position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 18; }
 
   .icon-btn {
     pointer-events: auto;
-    background: rgba(15, 20, 55, 0.6);
-    border: 1px solid rgba(120, 180, 255, 0.4);
+    background: rgba(15, 20, 55, 0.75);
+    border: 1px solid rgba(120, 180, 255, 0.5);
     color: #cfe6ff;
-    padding: 6px 12px; border-radius: 8px;
+    padding: 8px 12px; border-radius: 10px;
     font-size: 13px; cursor: pointer; font-family: inherit;
+    min-height: 38px;
   }
   .icon-btn:hover { background: rgba(120, 180, 255, 0.25); }
 
   /* End screen */
-  .word-review { max-height: 220px; overflow-y: auto; margin: 14px 0; padding-right: 8px; }
+  .word-review { max-height: 220px; overflow-y: auto; margin: 14px 0; padding-right: 6px; -webkit-overflow-scrolling: touch; }
   .word-review-item {
     display: flex; justify-content: space-between; padding: 8px 12px;
     border-radius: 8px; margin-bottom: 6px;
@@ -299,14 +329,14 @@
   }
   .word-review-item.right { border-left-color: #50dc82; }
   .word-review-item.wrong { border-left-color: #ff6b8a; }
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
   .stat-box {
     background: rgba(15, 20, 55, 0.5);
     border: 1px solid rgba(120, 180, 255, 0.3);
-    border-radius: 12px; padding: 14px; text-align: center;
+    border-radius: 12px; padding: 12px 8px; text-align: center;
   }
-  .stat-num { font-size: 28px; font-weight: 900; color: #7ad7ff; }
-  .stat-label { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+  .stat-num { font-size: 24px; font-weight: 900; color: #7ad7ff; }
+  .stat-label { font-size: 11px; opacity: 0.75; margin-top: 4px; }
 
   .leaderboard {
     background: rgba(15, 20, 55, 0.5);
@@ -326,16 +356,25 @@
     z-index: 1000; font-size: 14px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     opacity: 0; transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
 
-  @media (max-width: 600px) {
-    .title { font-size: 26px; }
-    .card { padding: 22px 18px; }
-    .meteor-hint { font-size: 20px; padding: 6px 12px; }
+  /* Mobile-specific tweaks */
+  @media (max-width: 700px) {
+    .title { font-size: 24px; }
+    .subtitle { font-size: 14px; }
+    .card { padding: 22px 16px; border-radius: 18px; }
+    .meteor-hint { font-size: 18px; padding: 6px 12px; }
     .score-big { font-size: 22px; }
-    .letter-slot { width: 28px; height: 38px; font-size: 20px; }
-    .book-grid { grid-template-columns: 1fr 1fr; }
+    .letter-slot { width: 26px; height: 36px; font-size: 18px; border-radius: 6px; }
+    .book-grid { grid-template-columns: 1fr; }
+    .type-bar { bottom: 130px; }
+    .ship { bottom: 50px; width: 50px; height: 65px; }
+    .ship-flame { bottom: 36px; }
+    .float-msg { font-size: 28px; }
+    .hearts { font-size: 18px; }
+    .player-name { font-size: 13px; }
   }
 </style>
 </head>
@@ -350,15 +389,15 @@
 
 <!-- ===== LOGIN SCREEN ===== -->
 <section id="screen-login" class="screen">
-  <div class="card" style="max-width: 540px;">
+  <div class="card" style="max-width: 520px;">
     <div class="title">🚀 太空单词听写大冒险</div>
     <div class="subtitle">小小宇航员，输入你的名字，开始今天的单词挑战吧！</div>
     <div class="field">
       <label>👨‍🚀 我的名字</label>
-      <input type="text" id="input-name" maxlength="20" placeholder="例如：小明" autocomplete="off"/>
+      <input type="text" id="input-name" maxlength="20" placeholder="点这里输入名字..." autocomplete="off" enterkeyhint="go" inputmode="text"/>
     </div>
     <div class="btn-row">
-      <button class="btn" id="btn-login">🚀 出发</button>
+      <button class="btn" id="btn-login" type="button">🚀 出发</button>
     </div>
   </div>
 </section>
@@ -369,9 +408,9 @@
     <div class="title">📚 我的单词本</div>
     <div class="subtitle" id="books-greeting">选一本来挑战，或者新建一本属于自己的单词本！</div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; flex-wrap: wrap;">
       <h3 style="font-size: 15px; opacity: 0.9;">📖 我的单词本</h3>
-      <button class="btn small" id="btn-new-book">➕ 新建单词本</button>
+      <button class="btn small" id="btn-new-book" type="button">➕ 新建单词本</button>
     </div>
 
     <div class="book-grid" id="my-books"></div>
@@ -389,7 +428,7 @@
     </div>
 
     <div class="btn-row" style="margin-top: 18px;">
-      <button class="btn secondary" id="btn-logout">↩ 换个名字</button>
+      <button class="btn secondary" id="btn-logout" type="button">↩ 换个名字</button>
     </div>
   </div>
 </section>
@@ -402,7 +441,7 @@
 
     <div class="field">
       <label>📕 单词本名字</label>
-      <input type="text" id="input-book-name" maxlength="30" placeholder="例如：四年级 Unit 1、本周英语单词..." autocomplete="off"/>
+      <input type="text" id="input-book-name" maxlength="30" placeholder="例如：四年级 Unit 1" autocomplete="off" enterkeyhint="next" inputmode="text"/>
     </div>
 
     <div class="file-drop" id="file-drop">
@@ -412,15 +451,15 @@
 
     <div class="field">
       <label>✏️ 单词列表（推荐 10 个）</label>
-      <textarea id="input-words" placeholder="apple|苹果&#10;banana|香蕉&#10;cat|猫&#10;...（推荐 10 个，最少 1 个）"></textarea>
+      <textarea id="input-words" placeholder="apple|苹果&#10;banana|香蕉&#10;cat|猫" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false"></textarea>
       <div class="helper">格式：<code>英文|中文</code>，每行一个。中文可省略。</div>
       <div class="helper" id="word-count">已输入：0 个单词</div>
     </div>
 
     <div class="btn-row">
-      <button class="btn secondary" id="btn-cancel-edit">← 返回</button>
-      <button class="btn secondary" id="btn-save-only">💾 保存</button>
-      <button class="btn" id="btn-save-play">💾 保存并开始 ▶️</button>
+      <button class="btn secondary" id="btn-cancel-edit" type="button">← 返回</button>
+      <button class="btn secondary" id="btn-save-only" type="button">💾 保存</button>
+      <button class="btn" id="btn-save-play" type="button">💾 保存并开始 ▶️</button>
     </div>
   </div>
 </section>
@@ -467,13 +506,17 @@
 
   <div class="type-bar">
     <div class="typed-display" id="typed-display"></div>
-    <input type="text" id="type-input" class="type-input" placeholder="听到单词后开始拼写..." autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"/>
+    <input type="text" id="type-input" class="type-input"
+           placeholder="点这里开始拼写..."
+           autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+           inputmode="text" enterkeyhint="send"/>
+    <div class="tap-hint" id="tap-hint">👆 点上面的输入框打开键盘</div>
   </div>
 
-  <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 11; display: flex; gap: 8px;">
-    <button class="icon-btn" id="btn-repeat">🔊 再读一次</button>
-    <button class="icon-btn" id="btn-skip">⏭ 跳过</button>
-    <button class="icon-btn" id="btn-quit">✖ 退出</button>
+  <div style="position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 11; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 90%;">
+    <button class="icon-btn" id="btn-repeat" type="button">🔊 再读</button>
+    <button class="icon-btn" id="btn-skip" type="button">⏭ 跳过</button>
+    <button class="icon-btn" id="btn-quit" type="button">✖ 退出</button>
   </div>
 </section>
 
@@ -506,8 +549,8 @@
     </div>
 
     <div class="btn-row">
-      <button class="btn secondary" id="btn-back-books">📚 回到单词本</button>
-      <button class="btn" id="btn-replay">🔁 再来一局</button>
+      <button class="btn secondary" id="btn-back-books" type="button">📚 回到单词本</button>
+      <button class="btn" id="btn-replay" type="button">🔁 再来一局</button>
     </div>
   </div>
 </section>
@@ -537,29 +580,16 @@ const END_MESSAGES = {
 };
 
 // ============================================================
-// Game state
+// State
 // ============================================================
 const State = {
-  playerName: "",
-  currentBookId: null,    // id of currently-played book (or "preset:animals")
-  currentBookName: "",
-  words: [],
-  queue: [],
-  current: null,
-  index: 0,
-  total: 0,
-  score: 0,
-  hearts: 3,
-  combo: 0,
-  maxCombo: 0,
-  right: 0,
-  wrong: 0,
-  results: [],
-  falling: null,
-  fallStart: 0,
-  fallDuration: 12000,
-  voice: null,
-  editingBookId: null,    // when editing existing book
+  playerName: "", currentBookId: null, currentBookName: "",
+  words: [], queue: [], current: null,
+  index: 0, total: 0, score: 0, hearts: 3,
+  combo: 0, maxCombo: 0, right: 0, wrong: 0, results: [],
+  falling: null, fallStart: 0, fallDuration: 12000,
+  voice: null, editingBookId: null,
+  audioUnlocked: false,
 };
 
 // ============================================================
@@ -568,35 +598,24 @@ const State = {
 const Store = {
   _mem: {},
   _safe() { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; } catch (e) { return false; } },
-  get(key, def) {
-    if (this._safe()) { try { const v = localStorage.getItem(key); return v == null ? def : JSON.parse(v); } catch(e) {} }
-    return key in this._mem ? this._mem[key] : def;
-  },
-  set(key, val) {
-    if (this._safe()) { try { localStorage.setItem(key, JSON.stringify(val)); return; } catch(e) {} }
-    this._mem[key] = val;
-  }
+  get(key, def) { if (this._safe()) { try { const v = localStorage.getItem(key); return v == null ? def : JSON.parse(v); } catch(e) {} } return key in this._mem ? this._mem[key] : def; },
+  set(key, val) { if (this._safe()) { try { localStorage.setItem(key, JSON.stringify(val)); return; } catch(e) {} } this._mem[key] = val; }
 };
-
-// Books per player: array of { id, name, text, createdAt, lastPlayed }
-function booksKey(player) { return "books:" + player; }
-function getBooks(player) { return Store.get(booksKey(player), []); }
-function saveBooks(player, books) { Store.set(booksKey(player), books); }
-function findBook(player, id) { return getBooks(player).find(b => b.id === id); }
-function upsertBook(player, book) {
-  const books = getBooks(player);
+function booksKey(p) { return "books:" + p; }
+function getBooks(p) { return Store.get(booksKey(p), []); }
+function saveBooks(p, b) { Store.set(booksKey(p), b); }
+function findBook(p, id) { return getBooks(p).find(b => b.id === id); }
+function upsertBook(p, book) {
+  const books = getBooks(p);
   const i = books.findIndex(b => b.id === book.id);
   if (i >= 0) books[i] = book; else books.unshift(book);
-  saveBooks(player, books);
+  saveBooks(p, books);
 }
-function deleteBook(player, id) {
-  saveBooks(player, getBooks(player).filter(b => b.id !== id));
-  Store.set("hs:" + player + ":" + id, null);
-}
+function deleteBook(p, id) { saveBooks(p, getBooks(p).filter(b => b.id !== id)); Store.set("hs:" + p + ":" + id, null); }
 function newBookId() { return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6); }
 
 // ============================================================
-// Speech synthesis
+// Speech + audio (mobile-friendly)
 // ============================================================
 function pickVoice() {
   const voices = speechSynthesis.getVoices();
@@ -620,11 +639,33 @@ if ('speechSynthesis' in window) {
   setTimeout(() => { State.voice = pickVoice(); }, 200);
 }
 
-// ============================================================
-// Audio cues
-// ============================================================
 let audioCtx = null;
 function ensureAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } }
+function unlockAudioOnGesture() {
+  if (State.audioUnlocked) return;
+  ensureAudio();
+  if (audioCtx && audioCtx.state === "suspended") { try { audioCtx.resume(); } catch(e) {} }
+  // iOS: must speak an empty utterance once in a gesture to unlock speech
+  if ('speechSynthesis' in window) {
+    try {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0; u.lang = 'en-US';
+      speechSynthesis.speak(u);
+    } catch(e) {}
+  }
+  State.audioUnlocked = true;
+}
+// Unlock on the very first touch/click anywhere
+function firstGestureUnlock() {
+  unlockAudioOnGesture();
+  window.removeEventListener("touchstart", firstGestureUnlock, true);
+  window.removeEventListener("mousedown", firstGestureUnlock, true);
+  window.removeEventListener("keydown", firstGestureUnlock, true);
+}
+window.addEventListener("touchstart", firstGestureUnlock, true);
+window.addEventListener("mousedown", firstGestureUnlock, true);
+window.addEventListener("keydown", firstGestureUnlock, true);
+
 function beep(freq, dur, type, vol) {
   ensureAudio(); if (!audioCtx) return;
   const t = audioCtx.currentTime;
@@ -640,7 +681,7 @@ function sndBad()  { beep(220, 0.2, 'sawtooth', 0.18); setTimeout(()=>beep(140, 
 function sndType() { beep(500 + Math.random()*200, 0.04, 'square', 0.06); }
 
 // ============================================================
-// Screen switching
+// Screens
 // ============================================================
 const $ = (id) => document.getElementById(id);
 function show(id) {
@@ -653,35 +694,62 @@ function toast(msg) {
 }
 
 // ============================================================
+// Mobile keyboard helper
+// On iOS/Android, .focus() only opens the keyboard if called
+// synchronously inside the same tap/click handler.
+// ============================================================
+function focusInput(el) {
+  if (!el) return;
+  try {
+    el.removeAttribute("readonly");
+    el.removeAttribute("disabled");
+    el.focus({ preventScroll: false });
+    // Move caret to end
+    if (typeof el.setSelectionRange === "function") {
+      const v = el.value || ""; el.setSelectionRange(v.length, v.length);
+    }
+  } catch(e) {}
+}
+
+// ============================================================
 // Login
 // ============================================================
 $("btn-login").addEventListener("click", () => {
   const name = $("input-name").value.trim();
-  if (!name) { $("input-name").focus(); return; }
+  if (!name) { focusInput($("input-name")); toast("请先输入名字哦"); return; }
   State.playerName = name;
   Store.set("lastName", name);
   showBooksScreen();
 });
 $("input-name").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-login").click(); });
+// Tap on the name field directly → focus to open keyboard (synchronous)
+$("input-name").addEventListener("click", function() { focusInput(this); });
+$("input-name").addEventListener("touchend", function(e) { focusInput(this); });
+
 window.addEventListener("load", () => {
   const lastName = Store.get("lastName", "");
   if (lastName) $("input-name").value = lastName;
-  $("input-name").focus();
+  // Don't auto-focus on mobile — wouldn't open keyboard anyway, and can confuse layout
+  if (!isTouchDevice()) $("input-name").focus();
 });
+function isTouchDevice() {
+  return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+}
 
 // ============================================================
-// Books screen
+// Books
 // ============================================================
 function showBooksScreen() {
   $("books-greeting").textContent = `${State.playerName}，欢迎回来！选一本来挑战，或者新建一本属于自己的单词本。`;
   renderBooks();
   show("screen-books");
 }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
 function renderBooks() {
   const books = getBooks(State.playerName);
   const grid = $("my-books");
   if (books.length === 0) {
-    grid.innerHTML = `<div class="empty-hint" style="grid-column: 1 / -1;">还没有单词本哦，点击右上角 ➕ 新建一本吧！</div>`;
+    grid.innerHTML = `<div class="empty-hint" style="grid-column: 1 / -1;">还没有单词本哦，点击 ➕ 新建一本吧！</div>`;
     return;
   }
   grid.innerHTML = books.map(b => {
@@ -694,14 +762,14 @@ function renderBooks() {
         <div class="book-meta">${wc} 个单词 · 上次：${lp}</div>
         <div class="book-badge">🏆 ${hs ? hs.score + " 分" : "—"}</div>
         <div class="book-actions">
-          <button class="btn small" data-act="play" data-id="${b.id}">▶️ 开始</button>
-          <button class="btn small secondary" data-act="edit" data-id="${b.id}">✏️ 编辑</button>
-          <button class="btn small danger" data-act="del" data-id="${b.id}">🗑</button>
+          <button class="btn small" data-act="play" data-id="${b.id}" type="button">▶️ 开始</button>
+          <button class="btn small secondary" data-act="edit" data-id="${b.id}" type="button">✏️ 编辑</button>
+          <button class="btn small danger" data-act="del" data-id="${b.id}" type="button">🗑</button>
         </div>
       </div>`;
   }).join("");
   grid.querySelectorAll("button[data-act]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", () => {
       const id = btn.dataset.id, act = btn.dataset.act;
       const book = findBook(State.playerName, id);
       if (!book) return;
@@ -716,21 +784,22 @@ function renderBooks() {
     });
   });
 }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
 
 document.querySelectorAll(".chip[data-preset]").forEach(c => {
   c.addEventListener("click", () => {
-    const k = c.dataset.preset;
-    const p = PRESETS[k];
+    const k = c.dataset.preset; const p = PRESETS[k];
     startGameFromBook({ id: "preset:" + k, name: p.name, text: p.text });
   });
 });
 
 $("btn-new-book").addEventListener("click", () => openEditScreen(null));
-$("btn-logout").addEventListener("click", () => { State.playerName = ""; show("screen-login"); $("input-name").focus(); });
+$("btn-logout").addEventListener("click", () => {
+  State.playerName = ""; show("screen-login");
+  if (!isTouchDevice()) $("input-name").focus();
+});
 
 // ============================================================
-// Edit screen
+// Edit
 // ============================================================
 function openEditScreen(book) {
   State.editingBookId = book ? book.id : null;
@@ -739,13 +808,20 @@ function openEditScreen(book) {
   $("input-words").value = book ? book.text : "";
   updateWordCount();
   show("screen-edit");
-  setTimeout(() => $("input-book-name").focus(), 100);
+  // Don't auto-focus on mobile (no keyboard pops anyway). Desktop: focus name field.
+  if (!isTouchDevice()) setTimeout(() => $("input-book-name").focus(), 100);
 }
 function suggestName() {
   const n = getBooks(State.playerName).length + 1;
   const d = new Date();
   return `单词本 ${n} · ${d.getMonth()+1}/${d.getDate()}`;
 }
+
+// Tap-to-focus for all major inputs (helps mobile keyboard reliability)
+["input-book-name", "input-words", "input-name"].forEach(id => {
+  const el = $(id); if (!el) return;
+  el.addEventListener("click", () => focusInput(el));
+});
 
 $("input-words").addEventListener("input", updateWordCount);
 function parseWords(raw) {
@@ -767,22 +843,17 @@ function updateWordCount() {
   el.textContent = msg; el.className = cls;
 }
 
-// File upload
 function handleFile(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     let text = e.target.result;
-    // CSV: convert "en,zh" to "en|zh"
     if (/\.csv$/i.test(file.name)) {
       text = text.split(/\r?\n/).map(l => l.replace(/^"|"$/g, "").replace(/","/g, "|")).join("\n");
     }
     $("input-words").value = text;
     updateWordCount();
-    // If book name is empty, use filename
-    if (!$("input-book-name").value.trim()) {
-      $("input-book-name").value = file.name.replace(/\.(txt|csv)$/i, "");
-    }
+    if (!$("input-book-name").value.trim()) $("input-book-name").value = file.name.replace(/\.(txt|csv)$/i, "");
     toast("📁 已加载 " + parseWords(text).length + " 个单词");
   };
   reader.readAsText(file, "UTF-8");
@@ -799,9 +870,8 @@ function saveCurrentBook() {
   const name = $("input-book-name").value.trim();
   const text = $("input-words").value;
   const ws = parseWords(text);
-  if (!name) { toast("请给单词本起个名字"); $("input-book-name").focus(); return null; }
-  if (ws.length === 0) { toast("至少输入 1 个单词"); $("input-words").focus(); return null; }
-
+  if (!name) { toast("请给单词本起个名字"); focusInput($("input-book-name")); return null; }
+  if (ws.length === 0) { toast("至少输入 1 个单词"); focusInput($("input-words")); return null; }
   let book;
   if (State.editingBookId) {
     book = findBook(State.playerName, State.editingBookId) || { id: State.editingBookId };
@@ -814,8 +884,7 @@ function saveCurrentBook() {
 }
 $("btn-save-only").addEventListener("click", () => {
   const b = saveCurrentBook(); if (!b) return;
-  toast("✅ 已保存：" + b.name);
-  showBooksScreen();
+  toast("✅ 已保存：" + b.name); showBooksScreen();
 });
 $("btn-save-play").addEventListener("click", () => {
   const b = saveCurrentBook(); if (!b) return;
@@ -836,39 +905,36 @@ function startGameFromBook(book) {
   if (!words.length) { toast("这本单词本是空的"); return; }
   State.currentBookId = book.id;
   State.currentBookName = book.name;
-  // update lastPlayed for saved books
   if (!book.id.startsWith("preset:")) {
     const saved = findBook(State.playerName, book.id);
     if (saved) { saved.lastPlayed = Date.now(); upsertBook(State.playerName, saved); }
   }
+  // Important: unlock audio + focus input within this same user tap
+  unlockAudioOnGesture();
   startGame(words);
+  // Focus the type-input synchronously so iOS opens the keyboard
+  focusInput($("type-input"));
 }
 
 function startGame(words) {
   State.words = words;
   State.queue = shuffle(words);
   State.total = State.queue.length;
-  State.index = 0;
-  State.score = 0;
-  State.hearts = 3;
-  State.combo = 0;
-  State.maxCombo = 0;
-  State.right = 0;
-  State.wrong = 0;
-  State.results = [];
+  State.index = 0; State.score = 0; State.hearts = 3;
+  State.combo = 0; State.maxCombo = 0; State.right = 0; State.wrong = 0; State.results = [];
 
   $("hud-name").textContent = "👨‍🚀 " + State.playerName;
   $("hud-book").textContent = "📕 " + State.currentBookName;
   const prev = (Store.get(hsKey(), []) || [])[0];
   $("hud-prev").textContent = "本本最高: " + (prev ? prev.score : 0);
   updateHUD();
-
   show("screen-game");
   ensureAudio();
+  // Show tap hint on mobile
+  $("tap-hint").style.display = isTouchDevice() ? "block" : "none";
+  // Start the first word soon after
   setTimeout(nextWord, 400);
-  setTimeout(() => $("type-input").focus(), 500);
 }
-
 function hsKey() { return "hs:" + State.playerName + ":" + State.currentBookId; }
 
 function updateHUD() {
@@ -893,7 +959,6 @@ function nextWord() {
   updateHUD();
   setTimeout(() => speak(State.current.en), 200);
   startFall();
-  $("type-input").focus();
 }
 
 function startFall() {
@@ -901,11 +966,11 @@ function startFall() {
   const meteor = $("meteor");
   const H = area.clientHeight;
   const startY = -120;
-  const endY = H - 240;
+  const endY = Math.max(120, H - 280);
   State.fallStart = performance.now();
-  const base = 10000;
+  const base = 11000;
   const speedBoost = Math.min(State.combo * 200, 3000);
-  State.fallDuration = Math.max(5500, base - speedBoost);
+  State.fallDuration = Math.max(6000, base - speedBoost);
   function tick(t) {
     const p = Math.min(1, (t - State.fallStart) / State.fallDuration);
     const y = startY + (endY - startY) * p;
@@ -951,6 +1016,7 @@ $("type-input").addEventListener("input", (e) => {
 });
 $("type-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
+    e.preventDefault();
     const v = e.target.value.toLowerCase();
     const target = State.current && State.current.en;
     if (!target) return;
@@ -958,12 +1024,21 @@ $("type-input").addEventListener("keydown", (e) => {
     else if (v.length > 0) wrongAnswer();
   }
 });
+// Tap on input → focus (mobile keyboard guarantee)
+$("type-input").addEventListener("click", function() { focusInput(this); });
+$("type-input").addEventListener("touchend", function() { focusInput(this); });
+
+// Tap anywhere on the game screen → refocus type-input (so keyboard re-opens)
+$("screen-game").addEventListener("click", (e) => {
+  // Don't refocus if user tapped a button
+  if (e.target.closest("button")) return;
+  if (e.target.closest("input")) return;
+  if (!$("screen-game").classList.contains("hidden")) focusInput($("type-input"));
+});
 
 function correctAnswer() {
   cancelFall();
-  $("type-input").disabled = true;
-  State.combo++;
-  State.maxCombo = Math.max(State.maxCombo, State.combo);
+  State.combo++; State.maxCombo = Math.max(State.maxCombo, State.combo);
   State.right++;
   const mult = Math.min(5, 1 + Math.floor((State.combo - 1) / 2));
   const points = 10 * mult;
@@ -973,7 +1048,7 @@ function correctAnswer() {
   explodeAt($("meteor"));
   sndGood();
   updateHUD();
-  setTimeout(nextWord, 900);
+  setTimeout(() => { nextWord(); focusInput($("type-input")); }, 900);
 }
 function wrongAnswer() {
   State.combo = 0;
@@ -983,9 +1058,10 @@ function wrongAnswer() {
   $("type-input").value = "";
   renderTypedDisplay("");
   updateHUD();
+  focusInput($("type-input"));
 }
 
-$("btn-repeat").addEventListener("click", () => { if (State.current) speak(State.current.en); $("type-input").focus(); });
+$("btn-repeat").addEventListener("click", () => { if (State.current) speak(State.current.en); focusInput($("type-input")); });
 $("btn-skip").addEventListener("click", () => {
   if (!State.current) return;
   cancelFall();
@@ -993,7 +1069,7 @@ $("btn-skip").addEventListener("click", () => {
   State.results.push({ word: State.current, ok: false });
   flashMessage("⏭ " + State.current.en, "bad");
   updateHUD();
-  setTimeout(nextWord, 800);
+  setTimeout(() => { nextWord(); focusInput($("type-input")); }, 800);
 });
 $("btn-quit").addEventListener("click", () => {
   if (confirm("确定要退出吗？当前进度不会保存哦。")) { cancelFall(); showBooksScreen(); }
@@ -1019,17 +1095,16 @@ function explodeAt(el) {
   const cy = rect.top - areaRect.top + rect.height / 2;
   el.style.display = "none";
   const colors = ["#ffd66b", "#ff6b8a", "#7ad7ff", "#50dc82", "#b78bff"];
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 22; i++) {
     const p = document.createElement("div");
     p.className = "particle";
     p.style.left = cx + "px"; p.style.top = cy + "px";
     p.style.background = colors[i % colors.length];
     p.style.boxShadow = `0 0 8px ${colors[i % colors.length]}`;
     area.appendChild(p);
-    const ang = (i / 24) * Math.PI * 2;
-    const dist = 80 + Math.random() * 120;
-    const dx = Math.cos(ang) * dist;
-    const dy = Math.sin(ang) * dist;
+    const ang = (i / 22) * Math.PI * 2;
+    const dist = 70 + Math.random() * 110;
+    const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
     p.animate([
       { transform: "translate(0,0) scale(1)", opacity: 1 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.2)`, opacity: 0 }
@@ -1039,8 +1114,8 @@ function explodeAt(el) {
 function shakeScreen() {
   const s = $("screen-game");
   s.animate([
-    { transform: "translate(0,0)" }, { transform: "translate(-8px, 4px)" },
-    { transform: "translate(8px, -4px)" }, { transform: "translate(-4px, 2px)" }, { transform: "translate(0,0)" }
+    { transform: "translate(0,0)" }, { transform: "translate(-6px, 3px)" },
+    { transform: "translate(6px, -3px)" }, { transform: "translate(-3px, 2px)" }, { transform: "translate(0,0)" }
   ], { duration: 350 });
 }
 
@@ -1058,17 +1133,14 @@ function endGame() {
   else msg = END_MESSAGES.ok;
   $("end-message").textContent = msg;
   $("end-title").textContent = State.hearts > 0 ? `🎉 闯关成功！「${State.currentBookName}」` : `💥 游戏结束 「${State.currentBookName}」`;
-
   $("end-score").textContent = State.score;
   $("end-right").textContent = `${State.right} / ${total}`;
   $("end-max-combo").textContent = State.maxCombo;
-
   $("word-review").innerHTML = State.results.map(r => `
     <div class="word-review-item ${r.ok ? "right" : "wrong"}">
       <span><b>${r.word.en}</b>${r.word.zh ? " — " + r.word.zh : ""}</span>
       <span>${r.ok ? "✅" : "❌"}</span>
     </div>`).join("");
-
   const key = hsKey();
   const list = Store.get(key, []);
   const entry = { score: State.score, date: new Date().toLocaleDateString("zh-CN"), right: State.right, total };
@@ -1081,15 +1153,11 @@ function endGame() {
       <span>#${i + 1} ${e.date}</span>
       <span>${e.score} 分 · ${e.right}/${e.total}</span>
     </div>`).join("");
-
   show("screen-end");
   if (ratio >= 0.8) { sndGood(); setTimeout(sndGood, 250); setTimeout(sndGood, 500); }
 }
-
-$("btn-replay").addEventListener("click", () => startGame(State.words));
+$("btn-replay").addEventListener("click", () => { unlockAudioOnGesture(); startGame(State.words); focusInput($("type-input")); });
 $("btn-back-books").addEventListener("click", () => showBooksScreen());
-
-$("input-name").focus();
 </script>
 
 </body>
