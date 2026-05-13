@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>太空单词听写大冒险 🚀</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 100%; height: 100%; overflow-x: hidden; font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; color: #e6f0ff; background: #050714; }
+  body { min-height: 100vh; }
+
+  /* ===== Space background ===== */
+  .space-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 25% 60%, rgba(120, 60, 255, 0.55) 0%, rgba(20, 0, 60, 0) 55%),
+      radial-gradient(ellipse at 75% 35%, rgba(60, 120, 255, 0.55) 0%, rgba(0, 20, 60, 0) 55%),
+      radial-gradient(ellipse at 50% 80%, rgba(220, 60, 180, 0.30) 0%, rgba(20, 0, 30, 0) 60%),
+      linear-gradient(180deg, #050714 0%, #0a0a3a 50%, #1a0030 100%);
+    overflow: hidden;
+  }
+  .stars, .stars-2 { position: absolute; inset: 0; pointer-events: none; }
+  .stars { background-image: radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+                              radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+                              radial-gradient(1px 1px at 80% 10%, #b0d0ff, transparent),
+                              radial-gradient(2px 2px at 40% 80%, #fff, transparent),
+                              radial-gradient(1px 1px at 90% 50%, #fff, transparent),
+                              radial-gradient(1.5px 1.5px at 10% 50%, #fff, transparent),
+                              radial-gradient(1px 1px at 30% 90%, #fff, transparent),
+                              radial-gradient(2px 2px at 70% 25%, #ffd0ff, transparent);
+            background-size: 800px 800px; animation: twinkle 4s ease-in-out infinite; }
+  .stars-2 { background-image: radial-gradient(1px 1px at 15% 15%, #fff, transparent),
+                                 radial-gradient(1px 1px at 55% 45%, #fff, transparent),
+                                 radial-gradient(2px 2px at 85% 65%, #d0e0ff, transparent),
+                                 radial-gradient(1px 1px at 25% 75%, #fff, transparent),
+                                 radial-gradient(1px 1px at 65% 5%, #fff, transparent);
+              background-size: 600px 600px; animation: drift 60s linear infinite, twinkle 6s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: 0.85; } 50% { opacity: 0.45; } }
+  @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-600px); } }
+  .galaxy {
+    position: absolute; width: 280px; height: 280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(150, 200, 255, 0.55) 0%, rgba(100, 60, 220, 0.3) 30%, transparent 70%);
+    filter: blur(3px); animation: spin 30s linear infinite;
+  }
+  .galaxy.g1 { left: 8%; top: 45%; }
+  .galaxy.g2 { right: 12%; top: 25%; width: 200px; height: 200px; animation-duration: 45s; animation-direction: reverse; }
+  @keyframes spin { from { transform: rotate(0deg) scale(1); } to { transform: rotate(360deg) scale(1); } }
+
+  /* ===== Layout ===== */
+  .screen {
+    position: relative; z-index: 5;
+    width: 100%; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .screen.scroll { justify-content: flex-start; padding-top: 40px; padding-bottom: 40px; }
+  .hidden { display: none !important; }
+
+  /* ===== Cards ===== */
+  .card {
+    background: rgba(15, 20, 55, 0.78);
+    border: 2px solid rgba(120, 180, 255, 0.5);
+    border-radius: 22px;
+    padding: 32px 36px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(100, 120, 255, 0.35), inset 0 0 30px rgba(80, 100, 220, 0.15);
+    max-width: 760px; width: 100%;
+  }
+  .title {
+    font-size: 34px; font-weight: 900; text-align: center;
+    background: linear-gradient(90deg, #7ad7ff, #b78bff, #ff7ad0);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(180, 140, 255, 0.4);
+    margin-bottom: 8px; letter-spacing: 1px;
+  }
+  .subtitle { text-align: center; opacity: 0.85; margin-bottom: 22px; font-size: 15px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; margin-bottom: 6px; font-size: 14px; opacity: 0.9; }
+  input[type="text"], textarea {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    background: rgba(8, 12, 35, 0.85);
+    border: 2px solid rgba(120, 180, 255, 0.45);
+    color: #fff; font-size: 15px; font-family: inherit;
+    outline: none; transition: all 0.2s; user-select: text;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: #7ad7ff; box-shadow: 0 0 15px rgba(120, 215, 255, 0.5); }
+  textarea { min-height: 200px; resize: vertical; font-family: "Menlo", "Consolas", monospace; font-size: 14px; line-height: 1.7; }
+  .btn {
+    padding: 12px 24px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #6b8aff, #b56bff);
+    color: white; font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(140, 100, 255, 0.45);
+    transition: transform 0.12s, box-shadow 0.2s; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(140, 100, 255, 0.65); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary { background: linear-gradient(135deg, #2a3060, #4a3070); }
+  .btn.danger { background: linear-gradient(135deg, #c0395a, #8a2848); }
+  .btn.small { padding: 8px 14px; font-size: 13px; border-radius: 9px; box-shadow: 0 3px 10px rgba(140, 100, 255, 0.35); }
+  .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .helper { font-size: 12px; opacity: 0.65; margin-top: 6px; }
+  .helper.warn { color: #ffb070; opacity: 0.95; }
+  .helper.ok { color: #7adba0; opacity: 0.95; }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip {
+    padding: 7px 12px; border-radius: 999px;
+    background: rgba(120, 180, 255, 0.15);
+    border: 1px solid rgba(120, 180, 255, 0.45);
+    color: #cfe6ff; font-size: 13px; cursor: pointer; transition: all 0.15s;
+  }
+  .chip:hover { background: rgba(120, 180, 255, 0.3); transform: translateY(-1px); }
+
+  /* Booklist cards */
+  .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 16px 0; }
+  .book-card {
+    background: linear-gradient(135deg, rgba(40, 50, 110, 0.7), rgba(80, 40, 130, 0.55));
+    border: 2px solid rgba(120, 180, 255, 0.4);
+    border-radius: 16px; padding: 16px;
+    transition: all 0.2s; position: relative;
+  }
+  .book-card:hover { transform: translateY(-3px); border-color: #7ad7ff; box-shadow: 0 8px 24px rgba(120, 200, 255, 0.35); }
+  .book-card .book-name { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 4px; word-break: break-all; }
+  .book-card .book-meta { font-size: 12px; opacity: 0.75; margin-bottom: 10px; }
+  .book-card .book-badge { font-size: 11px; opacity: 0.85; color: #ffd66b; }
+  .book-card .book-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .book-card.empty {
+    border-style: dashed; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 130px; opacity: 0.85;
+  }
+  .book-card.empty:hover { opacity: 1; }
+  .book-card.empty .plus { font-size: 38px; margin-bottom: 4px; }
+
+  .preset-section {
+    margin-top: 18px; padding-top: 18px;
+    border-top: 1px dashed rgba(120, 180, 255, 0.3);
+  }
+  .preset-section h3 { font-size: 14px; opacity: 0.8; margin-bottom: 10px; font-weight: 600; }
+  .empty-hint {
+    text-align: center; padding: 24px; opacity: 0.65; font-size: 14px;
+    border: 2px dashed rgba(120, 180, 255, 0.25); border-radius: 12px;
+  }
+
+  /* File upload */
+  .file-drop {
+    margin-bottom: 14px;
+    border: 2px dashed rgba(120, 180, 255, 0.5);
+    border-radius: 12px; padding: 14px;
+    text-align: center; font-size: 13px;
+    background: rgba(8, 12, 35, 0.4);
+    transition: all 0.2s; cursor: pointer;
+  }
+  .file-drop:hover, .file-drop.drag { background: rgba(80, 130, 255, 0.15); border-color: #7ad7ff; }
+  .file-drop input { display: none; }
+
+  /* ===== Game HUD ===== */
+  .game-screen { padding: 0; min-height: 100vh; }
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 18px 26px; z-index: 10; pointer-events: none;
+  }
+  .hud-left, .hud-right { display: flex; flex-direction: column; gap: 4px; }
+  .hud-right { align-items: flex-end; }
+  .player-name {
+    font-size: 15px; font-weight: 700;
+    background: rgba(15, 20, 55, 0.6); padding: 5px 12px; border-radius: 999px;
+    border: 1px solid rgba(120, 180, 255, 0.4);
+  }
+  .book-tag {
+    font-size: 12px; opacity: 0.85; color: #ffd66b;
+    background: rgba(15, 20, 55, 0.4); padding: 3px 10px; border-radius: 999px;
+    border: 1px solid rgba(255, 214, 107, 0.35);
+    margin-top: 4px;
+  }
+  .hearts { display: flex; gap: 4px; font-size: 26px; filter: drop-shadow(0 0 6px rgba(255, 80, 100, 0.7)); }
+  .hearts .gone { opacity: 0.22; filter: grayscale(1); }
+  .score-line { font-size: 13px; opacity: 0.8; }
+  .score-big { font-size: 30px; font-weight: 900; text-shadow: 0 0 12px rgba(180, 140, 255, 0.6); }
+  .combo {
+    position: absolute; bottom: 18px; left: 26px; z-index: 10;
+    font-size: 22px; font-weight: 800; color: #7ad7ff;
+    text-shadow: 0 0 14px rgba(120, 215, 255, 0.7);
+  }
+  .progress {
+    position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+    z-index: 10; font-size: 13px; opacity: 0.75;
+    background: rgba(15, 20, 55, 0.55); padding: 4px 12px; border-radius: 999px;
+  }
+
+  /* Falling word area */
+  .play-area { position: absolute; inset: 0; overflow: hidden; z-index: 3; }
+  .meteor {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .meteor-hint {
+    font-size: 26px; font-weight: 700; color: #ffe9a8;
+    text-shadow: 0 0 14px rgba(255, 200, 80, 0.5);
+    background: rgba(15, 20, 55, 0.55); padding: 8px 18px; border-radius: 12px;
+    border: 1px solid rgba(255, 220, 140, 0.45);
+    white-space: nowrap;
+  }
+  .meteor-rock {
+    width: 70px; height: 70px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9a6b, #b53a1a 60%, #4a1505);
+    box-shadow: 0 0 30px rgba(255, 140, 80, 0.7), inset -8px -8px 14px rgba(0,0,0,0.5);
+    animation: tumble 3s linear infinite; position: relative;
+  }
+  .meteor-rock::after {
+    content: ''; position: absolute; left: 50%; bottom: 100%;
+    transform: translateX(-50%);
+    width: 20px; height: 60px;
+    background: linear-gradient(to top, rgba(255,180,80,0.85), rgba(255,80,40,0));
+    border-radius: 50%; filter: blur(4px);
+  }
+  @keyframes tumble { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* Ship */
+  .ship {
+    position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
+    z-index: 4; width: 70px; height: 90px;
+    filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.8));
+  }
+  .ship-flame {
+    position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 36px;
+    background: linear-gradient(to top, rgba(255,200,80,0), #ffcc44 30%, #ff5b1b 70%);
+    border-radius: 50%; filter: blur(3px);
+    animation: flicker 0.15s ease-in-out infinite alternate;
+  }
+  @keyframes flicker { from { transform: translateX(-50%) scaleY(1); opacity: 0.85; } to { transform: translateX(-50%) scaleY(1.3); opacity: 1; } }
+
+  /* Type input */
+  .type-bar {
+    position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    width: min(640px, 90%);
+  }
+  .typed-display { display: flex; gap: 6px; min-height: 56px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .letter-slot {
+    width: 36px; height: 48px;
+    background: rgba(15, 20, 55, 0.55);
+    border: 2px solid rgba(120, 180, 255, 0.4);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 800; color: #fff;
+    text-transform: uppercase; transition: all 0.12s;
+  }
+  .letter-slot.correct { background: rgba(80, 220, 130, 0.35); border-color: #50dc82; color: #c5ffe0; box-shadow: 0 0 12px rgba(80, 220, 130, 0.5); }
+  .letter-slot.current { border-color: #ffd66b; box-shadow: 0 0 14px rgba(255, 214, 107, 0.6); }
+  .type-input {
+    width: 100%; padding: 14px 18px; text-align: center;
+    background: rgba(15, 20, 55, 0.7);
+    border: 2px solid rgba(120, 180, 255, 0.5);
+    border-radius: 14px; color: #fff;
+    font-size: 22px; font-weight: 700; letter-spacing: 4px; font-family: inherit;
+    outline: none; text-transform: lowercase; user-select: text;
+  }
+  .type-input:focus { border-color: #7ad7ff; box-shadow: 0 0 18px rgba(120, 215, 255, 0.55); }
+
+  /* Floating feedback */
+  .float-msg {
+    position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    z-index: 20;
+    font-size: 44px; font-weight: 900;
+    pointer-events: none; opacity: 0;
+    text-shadow: 0 0 18px currentColor;
+    animation: floatUp 1.2s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+  }
+  .float-msg.good { color: #50dc82; }
+  .float-msg.bad  { color: #ff6b8a; }
+
+  .particle { position: absolute; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 15; }
+
+  .icon-btn {
+    pointer-events: auto;
+    background: rgba(15, 20, 55, 0.6);
+    border: 1px solid rgba(120, 180, 255, 0.4);
+    color: #cfe6ff;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .icon-btn:hover { background: rgba(120, 180, 255, 0.25); }
+
+  /* End screen */
+  .word-review { max-height: 220px; overflow-y: auto; margin: 14px 0; padding-right: 8px; }
+  .word-review-item {
+    display: flex; justify-content: space-between; padding: 8px 12px;
+    border-radius: 8px; margin-bottom: 6px;
+    background: rgba(15, 20, 55, 0.5);
+    border-left: 3px solid #888;
+    font-size: 15px;
+  }
+  .word-review-item.right { border-left-color: #50dc82; }
+  .word-review-item.wrong { border-left-color: #ff6b8a; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .stat-box {
+    background: rgba(15, 20, 55, 0.5);
+    border: 1px solid rgba(120, 180, 255, 0.3);
+    border-radius: 12px; padding: 14px; text-align: center;
+  }
+  .stat-num { font-size: 28px; font-weight: 900; color: #7ad7ff; }
+  .stat-label { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+
+  .leaderboard {
+    background: rgba(15, 20, 55, 0.5);
+    border: 1px solid rgba(120, 180, 255, 0.3);
+    border-radius: 12px; padding: 14px; margin-top: 12px;
+  }
+  .leaderboard h3 { margin-bottom: 8px; font-size: 14px; color: #ffd66b; }
+  .lb-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .lb-row.me { color: #7ad7ff; font-weight: 700; }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
+    background: rgba(15, 20, 55, 0.95);
+    border: 1px solid rgba(120, 180, 255, 0.5);
+    color: #cfe6ff; padding: 12px 22px; border-radius: 12px;
+    z-index: 1000; font-size: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    opacity: 0; transition: opacity 0.25s, transform 0.25s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+  @media (max-width: 600px) {
+    .title { font-size: 26px; }
+    .card { padding: 22px 18px; }
+    .meteor-hint { font-size: 20px; padding: 6px 12px; }
+    .score-big { font-size: 22px; }
+    .letter-slot { width: 28px; height: 38px; font-size: 20px; }
+    .book-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="space-bg">
+  <div class="stars"></div>
+  <div class="stars-2"></div>
+  <div class="galaxy g1"></div>
+  <div class="galaxy g2"></div>
+</div>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<section id="screen-login" class="screen">
+  <div class="card" style="max-width: 540px;">
+    <div class="title">🚀 太空单词听写大冒险</div>
+    <div class="subtitle">小小宇航员，输入你的名字，开始今天的单词挑战吧！</div>
+    <div class="field">
+      <label>👨‍🚀 我的名字</label>
+      <input type="text" id="input-name" maxlength="20" placeholder="例如：小明" autocomplete="off"/>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-login">🚀 出发</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BOOK LIST SCREEN ===== -->
+<section id="screen-books" class="screen scroll hidden">
+  <div class="card">
+    <div class="title">📚 我的单词本</div>
+    <div class="subtitle" id="books-greeting">选一本来挑战，或者新建一本属于自己的单词本！</div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+      <h3 style="font-size: 15px; opacity: 0.9;">📖 我的单词本</h3>
+      <button class="btn small" id="btn-new-book">➕ 新建单词本</button>
+    </div>
+
+    <div class="book-grid" id="my-books"></div>
+
+    <div class="preset-section">
+      <h3>✨ 推荐主题（点击直接开始）</h3>
+      <div class="preset-row">
+        <div class="chip" data-preset="animals">🐱 动物</div>
+        <div class="chip" data-preset="fruits">🍎 水果</div>
+        <div class="chip" data-preset="colors">🎨 颜色</div>
+        <div class="chip" data-preset="body">👁️ 身体</div>
+        <div class="chip" data-preset="school">📚 学习用品</div>
+        <div class="chip" data-preset="family">👨‍👩‍👧 家人</div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top: 18px;">
+      <button class="btn secondary" id="btn-logout">↩ 换个名字</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== EDIT BOOK SCREEN ===== -->
+<section id="screen-edit" class="screen scroll hidden">
+  <div class="card">
+    <div class="title" id="edit-title">➕ 新建单词本</div>
+    <div class="subtitle">给这本单词本起个名字，每次推荐 10 个单词。可以手动输入，也可以上传文件。</div>
+
+    <div class="field">
+      <label>📕 单词本名字</label>
+      <input type="text" id="input-book-name" maxlength="30" placeholder="例如：四年级 Unit 1、本周英语单词..." autocomplete="off"/>
+    </div>
+
+    <div class="file-drop" id="file-drop">
+      <input type="file" id="file-input" accept=".txt,.csv"/>
+      📁 <b>点击或拖入文件</b> 上传 .txt / .csv（每行一个单词，格式 <code>apple|苹果</code>）
+    </div>
+
+    <div class="field">
+      <label>✏️ 单词列表（推荐 10 个）</label>
+      <textarea id="input-words" placeholder="apple|苹果&#10;banana|香蕉&#10;cat|猫&#10;...（推荐 10 个，最少 1 个）"></textarea>
+      <div class="helper">格式：<code>英文|中文</code>，每行一个。中文可省略。</div>
+      <div class="helper" id="word-count">已输入：0 个单词</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn secondary" id="btn-cancel-edit">← 返回</button>
+      <button class="btn secondary" id="btn-save-only">💾 保存</button>
+      <button class="btn" id="btn-save-play">💾 保存并开始 ▶️</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GAME SCREEN ===== -->
+<section id="screen-game" class="screen game-screen hidden">
+  <div class="hud">
+    <div class="hud-left">
+      <div class="player-name" id="hud-name">👨‍🚀 小明</div>
+      <div class="book-tag" id="hud-book">📕 默认</div>
+      <div class="score-line" id="hud-prev">上次最高: 0</div>
+    </div>
+    <div class="hud-right">
+      <div class="hearts" id="hud-hearts">❤️❤️❤️</div>
+      <div class="score-line">得分</div>
+      <div class="score-big" id="hud-score">0</div>
+    </div>
+  </div>
+
+  <div class="progress" id="hud-progress">第 1 / 10 题</div>
+
+  <div class="play-area" id="play-area">
+    <div class="meteor" id="meteor">
+      <div class="meteor-hint" id="meteor-hint">apple</div>
+      <div class="meteor-rock"></div>
+    </div>
+  </div>
+
+  <div class="combo" id="hud-combo">⚡ 1x 连击</div>
+
+  <svg class="ship" viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#cfe6ff"/>
+        <stop offset="100%" stop-color="#5a78c8"/>
+      </linearGradient>
+    </defs>
+    <path d="M35 5 L55 55 L50 75 L20 75 L15 55 Z" fill="url(#hull)" stroke="#88b8ff" stroke-width="2"/>
+    <circle cx="35" cy="40" r="7" fill="#7ad7ff" stroke="#fff" stroke-width="1.5"/>
+    <path d="M15 55 L5 75 L18 70 Z" fill="#6b8aff"/>
+    <path d="M55 55 L65 75 L52 70 Z" fill="#6b8aff"/>
+  </svg>
+  <div class="ship-flame"></div>
+
+  <div class="type-bar">
+    <div class="typed-display" id="typed-display"></div>
+    <input type="text" id="type-input" class="type-input" placeholder="听到单词后开始拼写..." autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"/>
+  </div>
+
+  <div style="position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 11; display: flex; gap: 8px;">
+    <button class="icon-btn" id="btn-repeat">🔊 再读一次</button>
+    <button class="icon-btn" id="btn-skip">⏭ 跳过</button>
+    <button class="icon-btn" id="btn-quit">✖ 退出</button>
+  </div>
+</section>
+
+<!-- ===== END SCREEN ===== -->
+<section id="screen-end" class="screen scroll hidden">
+  <div class="card">
+    <div class="title" id="end-title">🎉 闯关成功！</div>
+    <div class="subtitle" id="end-message">真棒！继续加油！</div>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-num" id="end-score">0</div>
+        <div class="stat-label">最终得分</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="end-right">0</div>
+        <div class="stat-label">答对单词</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="end-max-combo">0</div>
+        <div class="stat-label">最高连击</div>
+      </div>
+    </div>
+
+    <div class="word-review" id="word-review"></div>
+
+    <div class="leaderboard" id="leaderboard">
+      <h3>🏆 本单词本最高分 TOP 5</h3>
+      <div id="lb-list"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn secondary" id="btn-back-books">📚 回到单词本</button>
+      <button class="btn" id="btn-replay">🔁 再来一局</button>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ============================================================
+// Vocabulary presets
+// ============================================================
+const PRESETS = {
+  animals: { name: "🐱 动物", text: "cat|猫\ndog|狗\nbird|鸟\nfish|鱼\nhorse|马\nrabbit|兔子\ntiger|老虎\nlion|狮子\nmonkey|猴子\nelephant|大象" },
+  fruits:  { name: "🍎 水果", text: "apple|苹果\nbanana|香蕉\norange|橙子\ngrape|葡萄\npear|梨\npeach|桃子\nlemon|柠檬\nmango|芒果\nstrawberry|草莓\nwatermelon|西瓜" },
+  colors:  { name: "🎨 颜色", text: "red|红色\nblue|蓝色\ngreen|绿色\nyellow|黄色\nblack|黑色\nwhite|白色\npink|粉色\npurple|紫色\nbrown|棕色\norange|橙色" },
+  body:    { name: "👁️ 身体", text: "head|头\neye|眼睛\near|耳朵\nnose|鼻子\nmouth|嘴巴\nhand|手\nfoot|脚\narm|手臂\nleg|腿\nhair|头发" },
+  school:  { name: "📚 学习用品", text: "book|书\npen|钢笔\npencil|铅笔\nruler|尺子\neraser|橡皮\nbag|书包\ndesk|课桌\nchair|椅子\nteacher|老师\nstudent|学生" },
+  family:  { name: "👨‍👩‍👧 家人", text: "father|爸爸\nmother|妈妈\nbrother|哥哥\nsister|姐姐\ngrandpa|爷爷\ngrandma|奶奶\nuncle|叔叔\naunt|阿姨\ncousin|表兄妹\nfamily|家人" }
+};
+
+const ENCOURAGEMENTS_GOOD = ["太棒了！", "完美！", "好厉害！", "继续！", "棒极了！", "你最棒！", "太聪明了！", "Amazing!", "Excellent!"];
+const ENCOURAGEMENTS_BAD  = ["再加油！", "没关系！", "下次会更好！", "别灰心！", "继续努力！"];
+const END_MESSAGES = {
+  perfect: "🌟 完美通关！你是单词小天才！",
+  great:   "👏 太厉害了！绝大多数都答对了！",
+  good:    "👍 不错哦！再多练习几次就更熟了！",
+  ok:      "💪 加油！每天进步一点点，你会越来越棒！"
+};
+
+// ============================================================
+// Game state
+// ============================================================
+const State = {
+  playerName: "",
+  currentBookId: null,    // id of currently-played book (or "preset:animals")
+  currentBookName: "",
+  words: [],
+  queue: [],
+  current: null,
+  index: 0,
+  total: 0,
+  score: 0,
+  hearts: 3,
+  combo: 0,
+  maxCombo: 0,
+  right: 0,
+  wrong: 0,
+  results: [],
+  falling: null,
+  fallStart: 0,
+  fallDuration: 12000,
+  voice: null,
+  editingBookId: null,    // when editing existing book
+};
+
+// ============================================================
+// Storage
+// ============================================================
+const Store = {
+  _mem: {},
+  _safe() { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; } catch (e) { return false; } },
+  get(key, def) {
+    if (this._safe()) { try { const v = localStorage.getItem(key); return v == null ? def : JSON.parse(v); } catch(e) {} }
+    return key in this._mem ? this._mem[key] : def;
+  },
+  set(key, val) {
+    if (this._safe()) { try { localStorage.setItem(key, JSON.stringify(val)); return; } catch(e) {} }
+    this._mem[key] = val;
+  }
+};
+
+// Books per player: array of { id, name, text, createdAt, lastPlayed }
+function booksKey(player) { return "books:" + player; }
+function getBooks(player) { return Store.get(booksKey(player), []); }
+function saveBooks(player, books) { Store.set(booksKey(player), books); }
+function findBook(player, id) { return getBooks(player).find(b => b.id === id); }
+function upsertBook(player, book) {
+  const books = getBooks(player);
+  const i = books.findIndex(b => b.id === book.id);
+  if (i >= 0) books[i] = book; else books.unshift(book);
+  saveBooks(player, books);
+}
+function deleteBook(player, id) {
+  saveBooks(player, getBooks(player).filter(b => b.id !== id));
+  Store.set("hs:" + player + ":" + id, null);
+}
+function newBookId() { return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6); }
+
+// ============================================================
+// Speech synthesis
+// ============================================================
+function pickVoice() {
+  const voices = speechSynthesis.getVoices();
+  const en = voices.filter(v => /^en/i.test(v.lang));
+  if (!en.length) return null;
+  const female = en.find(v => /female|samantha|victoria|karen|moira|tessa|google/i.test(v.name));
+  return female || en[0];
+}
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.85; u.pitch = 1.05;
+    if (State.voice) u.voice = State.voice;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => { State.voice = pickVoice(); };
+  setTimeout(() => { State.voice = pickVoice(); }, 200);
+}
+
+// ============================================================
+// Audio cues
+// ============================================================
+let audioCtx = null;
+function ensureAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } }
+function beep(freq, dur, type, vol) {
+  ensureAudio(); if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + dur);
+}
+function sndGood() { beep(660, 0.08, 'triangle', 0.18); setTimeout(()=>beep(880, 0.12, 'triangle', 0.18), 70); setTimeout(()=>beep(1320, 0.15, 'triangle', 0.18), 160); }
+function sndBad()  { beep(220, 0.2, 'sawtooth', 0.18); setTimeout(()=>beep(140, 0.25, 'sawtooth', 0.18), 120); }
+function sndType() { beep(500 + Math.random()*200, 0.04, 'square', 0.06); }
+
+// ============================================================
+// Screen switching
+// ============================================================
+const $ = (id) => document.getElementById(id);
+function show(id) {
+  ["screen-login", "screen-books", "screen-edit", "screen-game", "screen-end"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  window.scrollTo(0, 0);
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ============================================================
+// Login
+// ============================================================
+$("btn-login").addEventListener("click", () => {
+  const name = $("input-name").value.trim();
+  if (!name) { $("input-name").focus(); return; }
+  State.playerName = name;
+  Store.set("lastName", name);
+  showBooksScreen();
+});
+$("input-name").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-login").click(); });
+window.addEventListener("load", () => {
+  const lastName = Store.get("lastName", "");
+  if (lastName) $("input-name").value = lastName;
+  $("input-name").focus();
+});
+
+// ============================================================
+// Books screen
+// ============================================================
+function showBooksScreen() {
+  $("books-greeting").textContent = `${State.playerName}，欢迎回来！选一本来挑战，或者新建一本属于自己的单词本。`;
+  renderBooks();
+  show("screen-books");
+}
+function renderBooks() {
+  const books = getBooks(State.playerName);
+  const grid = $("my-books");
+  if (books.length === 0) {
+    grid.innerHTML = `<div class="empty-hint" style="grid-column: 1 / -1;">还没有单词本哦，点击右上角 ➕ 新建一本吧！</div>`;
+    return;
+  }
+  grid.innerHTML = books.map(b => {
+    const wc = parseWords(b.text).length;
+    const lp = b.lastPlayed ? new Date(b.lastPlayed).toLocaleDateString("zh-CN") : "还没玩过";
+    const hs = (Store.get("hs:" + State.playerName + ":" + b.id, []) || [])[0];
+    return `
+      <div class="book-card" data-id="${b.id}">
+        <div class="book-name">📕 ${escapeHtml(b.name)}</div>
+        <div class="book-meta">${wc} 个单词 · 上次：${lp}</div>
+        <div class="book-badge">🏆 ${hs ? hs.score + " 分" : "—"}</div>
+        <div class="book-actions">
+          <button class="btn small" data-act="play" data-id="${b.id}">▶️ 开始</button>
+          <button class="btn small secondary" data-act="edit" data-id="${b.id}">✏️ 编辑</button>
+          <button class="btn small danger" data-act="del" data-id="${b.id}">🗑</button>
+        </div>
+      </div>`;
+  }).join("");
+  grid.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const id = btn.dataset.id, act = btn.dataset.act;
+      const book = findBook(State.playerName, id);
+      if (!book) return;
+      if (act === "play") startGameFromBook(book);
+      else if (act === "edit") openEditScreen(book);
+      else if (act === "del") {
+        if (confirm(`确定要删除单词本「${book.name}」吗？`)) {
+          deleteBook(State.playerName, id);
+          renderBooks(); toast("已删除");
+        }
+      }
+    });
+  });
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+
+document.querySelectorAll(".chip[data-preset]").forEach(c => {
+  c.addEventListener("click", () => {
+    const k = c.dataset.preset;
+    const p = PRESETS[k];
+    startGameFromBook({ id: "preset:" + k, name: p.name, text: p.text });
+  });
+});
+
+$("btn-new-book").addEventListener("click", () => openEditScreen(null));
+$("btn-logout").addEventListener("click", () => { State.playerName = ""; show("screen-login"); $("input-name").focus(); });
+
+// ============================================================
+// Edit screen
+// ============================================================
+function openEditScreen(book) {
+  State.editingBookId = book ? book.id : null;
+  $("edit-title").textContent = book ? "✏️ 编辑：" + book.name : "➕ 新建单词本";
+  $("input-book-name").value = book ? book.name : suggestName();
+  $("input-words").value = book ? book.text : "";
+  updateWordCount();
+  show("screen-edit");
+  setTimeout(() => $("input-book-name").focus(), 100);
+}
+function suggestName() {
+  const n = getBooks(State.playerName).length + 1;
+  const d = new Date();
+  return `单词本 ${n} · ${d.getMonth()+1}/${d.getDate()}`;
+}
+
+$("input-words").addEventListener("input", updateWordCount);
+function parseWords(raw) {
+  return (raw || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    const [en, zh] = l.split(/[|,\t]/).map(s => (s || "").trim());
+    return { en: (en || "").toLowerCase().replace(/[^a-z']/g, ""), zh: zh || "" };
+  }).filter(w => w.en.length > 0);
+}
+function updateWordCount() {
+  const ws = parseWords($("input-words").value);
+  const el = $("word-count");
+  let msg = `已输入：${ws.length} 个单词`;
+  let cls = "helper";
+  if (ws.length === 0) { msg += "（至少输入 1 个）"; cls = "helper warn"; }
+  else if (ws.length < 10) { msg += "（推荐 10 个，再加 " + (10 - ws.length) + " 个）"; cls = "helper warn"; }
+  else if (ws.length === 10) { msg += " ✓ 正好 10 个！"; cls = "helper ok"; }
+  else if (ws.length <= 20) { msg += " ✓"; cls = "helper ok"; }
+  else { msg += "（已超过 20 个，建议精简）"; cls = "helper warn"; }
+  el.textContent = msg; el.className = cls;
+}
+
+// File upload
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let text = e.target.result;
+    // CSV: convert "en,zh" to "en|zh"
+    if (/\.csv$/i.test(file.name)) {
+      text = text.split(/\r?\n/).map(l => l.replace(/^"|"$/g, "").replace(/","/g, "|")).join("\n");
+    }
+    $("input-words").value = text;
+    updateWordCount();
+    // If book name is empty, use filename
+    if (!$("input-book-name").value.trim()) {
+      $("input-book-name").value = file.name.replace(/\.(txt|csv)$/i, "");
+    }
+    toast("📁 已加载 " + parseWords(text).length + " 个单词");
+  };
+  reader.readAsText(file, "UTF-8");
+}
+$("file-input").addEventListener("change", (e) => handleFile(e.target.files[0]));
+$("file-drop").addEventListener("click", () => $("file-input").click());
+["dragenter", "dragover"].forEach(ev => $("file-drop").addEventListener(ev, (e) => { e.preventDefault(); $("file-drop").classList.add("drag"); }));
+["dragleave", "drop"].forEach(ev => $("file-drop").addEventListener(ev, (e) => { e.preventDefault(); $("file-drop").classList.remove("drag"); }));
+$("file-drop").addEventListener("drop", (e) => { e.preventDefault(); $("file-drop").classList.remove("drag"); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+$("btn-cancel-edit").addEventListener("click", () => showBooksScreen());
+
+function saveCurrentBook() {
+  const name = $("input-book-name").value.trim();
+  const text = $("input-words").value;
+  const ws = parseWords(text);
+  if (!name) { toast("请给单词本起个名字"); $("input-book-name").focus(); return null; }
+  if (ws.length === 0) { toast("至少输入 1 个单词"); $("input-words").focus(); return null; }
+
+  let book;
+  if (State.editingBookId) {
+    book = findBook(State.playerName, State.editingBookId) || { id: State.editingBookId };
+    book.name = name; book.text = text;
+  } else {
+    book = { id: newBookId(), name, text, createdAt: Date.now() };
+  }
+  upsertBook(State.playerName, book);
+  return book;
+}
+$("btn-save-only").addEventListener("click", () => {
+  const b = saveCurrentBook(); if (!b) return;
+  toast("✅ 已保存：" + b.name);
+  showBooksScreen();
+});
+$("btn-save-play").addEventListener("click", () => {
+  const b = saveCurrentBook(); if (!b) return;
+  startGameFromBook(b);
+});
+
+// ============================================================
+// Game flow
+// ============================================================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function startGameFromBook(book) {
+  const words = parseWords(book.text);
+  if (!words.length) { toast("这本单词本是空的"); return; }
+  State.currentBookId = book.id;
+  State.currentBookName = book.name;
+  // update lastPlayed for saved books
+  if (!book.id.startsWith("preset:")) {
+    const saved = findBook(State.playerName, book.id);
+    if (saved) { saved.lastPlayed = Date.now(); upsertBook(State.playerName, saved); }
+  }
+  startGame(words);
+}
+
+function startGame(words) {
+  State.words = words;
+  State.queue = shuffle(words);
+  State.total = State.queue.length;
+  State.index = 0;
+  State.score = 0;
+  State.hearts = 3;
+  State.combo = 0;
+  State.maxCombo = 0;
+  State.right = 0;
+  State.wrong = 0;
+  State.results = [];
+
+  $("hud-name").textContent = "👨‍🚀 " + State.playerName;
+  $("hud-book").textContent = "📕 " + State.currentBookName;
+  const prev = (Store.get(hsKey(), []) || [])[0];
+  $("hud-prev").textContent = "本本最高: " + (prev ? prev.score : 0);
+  updateHUD();
+
+  show("screen-game");
+  ensureAudio();
+  setTimeout(nextWord, 400);
+  setTimeout(() => $("type-input").focus(), 500);
+}
+
+function hsKey() { return "hs:" + State.playerName + ":" + State.currentBookId; }
+
+function updateHUD() {
+  $("hud-score").textContent = State.score;
+  $("hud-progress").textContent = `第 ${Math.min(State.index + 1, State.total)} / ${State.total} 题`;
+  $("hud-combo").textContent = `⚡ ${State.combo}x 连击 ${State.combo >= 3 ? "🔥" : ""}`;
+  let hearts = "";
+  for (let i = 0; i < 3; i++) hearts += i < State.hearts ? "❤️" : '<span class="gone">🤍</span>';
+  $("hud-hearts").innerHTML = hearts;
+}
+
+function nextWord() {
+  cancelFall();
+  if (State.hearts <= 0 || State.queue.length === 0) return endGame();
+  State.current = State.queue.shift();
+  State.index++;
+  renderTypedDisplay("");
+  $("type-input").value = "";
+  $("type-input").disabled = false;
+  $("meteor-hint").textContent = State.current.zh ? State.current.zh : "👂 仔细听...";
+  $("meteor").style.display = "flex";
+  updateHUD();
+  setTimeout(() => speak(State.current.en), 200);
+  startFall();
+  $("type-input").focus();
+}
+
+function startFall() {
+  const area = $("play-area");
+  const meteor = $("meteor");
+  const H = area.clientHeight;
+  const startY = -120;
+  const endY = H - 240;
+  State.fallStart = performance.now();
+  const base = 10000;
+  const speedBoost = Math.min(State.combo * 200, 3000);
+  State.fallDuration = Math.max(5500, base - speedBoost);
+  function tick(t) {
+    const p = Math.min(1, (t - State.fallStart) / State.fallDuration);
+    const y = startY + (endY - startY) * p;
+    meteor.style.top = y + "px";
+    if (p >= 1) { hitShip(); return; }
+    State.falling = requestAnimationFrame(tick);
+  }
+  State.falling = requestAnimationFrame(tick);
+}
+function cancelFall() { if (State.falling) cancelAnimationFrame(State.falling); State.falling = null; }
+
+function hitShip() {
+  cancelFall();
+  State.hearts--; State.combo = 0; State.wrong++;
+  State.results.push({ word: State.current, ok: false });
+  flashMessage("💥 " + State.current.en, "bad");
+  sndBad(); shakeScreen();
+  updateHUD();
+  setTimeout(nextWord, 1200);
+}
+
+function renderTypedDisplay(typed) {
+  const target = (State.current && State.current.en) || "";
+  const slots = [];
+  for (let i = 0; i < target.length; i++) {
+    const ch = typed[i] || "";
+    const correct = ch && ch.toLowerCase() === target[i];
+    const isCurrent = i === typed.length;
+    slots.push(`<div class="letter-slot ${correct ? "correct" : ""} ${isCurrent ? "current" : ""}">${ch}</div>`);
+  }
+  $("typed-display").innerHTML = slots.join("");
+}
+
+$("type-input").addEventListener("input", (e) => {
+  if (!State.current) return;
+  let v = e.target.value.toLowerCase().replace(/[^a-z']/g, "");
+  const target = State.current.en;
+  if (v.length > target.length) v = v.slice(0, target.length);
+  e.target.value = v;
+  if (v.length) sndType();
+  renderTypedDisplay(v);
+  if (v === target) correctAnswer();
+});
+$("type-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const v = e.target.value.toLowerCase();
+    const target = State.current && State.current.en;
+    if (!target) return;
+    if (v === target) correctAnswer();
+    else if (v.length > 0) wrongAnswer();
+  }
+});
+
+function correctAnswer() {
+  cancelFall();
+  $("type-input").disabled = true;
+  State.combo++;
+  State.maxCombo = Math.max(State.maxCombo, State.combo);
+  State.right++;
+  const mult = Math.min(5, 1 + Math.floor((State.combo - 1) / 2));
+  const points = 10 * mult;
+  State.score += points;
+  State.results.push({ word: State.current, ok: true });
+  flashMessage(`+${points} ${randomItem(ENCOURAGEMENTS_GOOD)}`, "good");
+  explodeAt($("meteor"));
+  sndGood();
+  updateHUD();
+  setTimeout(nextWord, 900);
+}
+function wrongAnswer() {
+  State.combo = 0;
+  flashMessage("再试试 " + randomItem(ENCOURAGEMENTS_BAD), "bad");
+  beep(200, 0.1, 'square', 0.12);
+  setTimeout(() => speak(State.current.en), 100);
+  $("type-input").value = "";
+  renderTypedDisplay("");
+  updateHUD();
+}
+
+$("btn-repeat").addEventListener("click", () => { if (State.current) speak(State.current.en); $("type-input").focus(); });
+$("btn-skip").addEventListener("click", () => {
+  if (!State.current) return;
+  cancelFall();
+  State.combo = 0; State.wrong++;
+  State.results.push({ word: State.current, ok: false });
+  flashMessage("⏭ " + State.current.en, "bad");
+  updateHUD();
+  setTimeout(nextWord, 800);
+});
+$("btn-quit").addEventListener("click", () => {
+  if (confirm("确定要退出吗？当前进度不会保存哦。")) { cancelFall(); showBooksScreen(); }
+});
+
+// ============================================================
+// Effects
+// ============================================================
+function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function flashMessage(text, kind) {
+  const area = $("play-area");
+  const d = document.createElement("div");
+  d.className = "float-msg " + (kind || "");
+  d.textContent = text;
+  area.appendChild(d);
+  setTimeout(() => d.remove(), 1300);
+}
+function explodeAt(el) {
+  const area = $("play-area");
+  const rect = el.getBoundingClientRect();
+  const areaRect = area.getBoundingClientRect();
+  const cx = rect.left - areaRect.left + rect.width / 2;
+  const cy = rect.top - areaRect.top + rect.height / 2;
+  el.style.display = "none";
+  const colors = ["#ffd66b", "#ff6b8a", "#7ad7ff", "#50dc82", "#b78bff"];
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = cx + "px"; p.style.top = cy + "px";
+    p.style.background = colors[i % colors.length];
+    p.style.boxShadow = `0 0 8px ${colors[i % colors.length]}`;
+    area.appendChild(p);
+    const ang = (i / 24) * Math.PI * 2;
+    const dist = 80 + Math.random() * 120;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist;
+    p.animate([
+      { transform: "translate(0,0) scale(1)", opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.2)`, opacity: 0 }
+    ], { duration: 700 + Math.random() * 300, easing: "cubic-bezier(.2,.7,.4,1)" }).onfinish = () => p.remove();
+  }
+}
+function shakeScreen() {
+  const s = $("screen-game");
+  s.animate([
+    { transform: "translate(0,0)" }, { transform: "translate(-8px, 4px)" },
+    { transform: "translate(8px, -4px)" }, { transform: "translate(-4px, 2px)" }, { transform: "translate(0,0)" }
+  ], { duration: 350 });
+}
+
+// ============================================================
+// End screen
+// ============================================================
+function endGame() {
+  cancelFall();
+  const total = State.total;
+  const ratio = total ? State.right / total : 0;
+  let msg;
+  if (State.hearts > 0 && ratio === 1) msg = END_MESSAGES.perfect;
+  else if (ratio >= 0.8) msg = END_MESSAGES.great;
+  else if (ratio >= 0.5) msg = END_MESSAGES.good;
+  else msg = END_MESSAGES.ok;
+  $("end-message").textContent = msg;
+  $("end-title").textContent = State.hearts > 0 ? `🎉 闯关成功！「${State.currentBookName}」` : `💥 游戏结束 「${State.currentBookName}」`;
+
+  $("end-score").textContent = State.score;
+  $("end-right").textContent = `${State.right} / ${total}`;
+  $("end-max-combo").textContent = State.maxCombo;
+
+  $("word-review").innerHTML = State.results.map(r => `
+    <div class="word-review-item ${r.ok ? "right" : "wrong"}">
+      <span><b>${r.word.en}</b>${r.word.zh ? " — " + r.word.zh : ""}</span>
+      <span>${r.ok ? "✅" : "❌"}</span>
+    </div>`).join("");
+
+  const key = hsKey();
+  const list = Store.get(key, []);
+  const entry = { score: State.score, date: new Date().toLocaleDateString("zh-CN"), right: State.right, total };
+  list.push(entry);
+  list.sort((a, b) => b.score - a.score);
+  const trimmed = list.slice(0, 5);
+  Store.set(key, trimmed);
+  $("lb-list").innerHTML = trimmed.map((e, i) => `
+    <div class="lb-row ${e === entry ? "me" : ""}">
+      <span>#${i + 1} ${e.date}</span>
+      <span>${e.score} 分 · ${e.right}/${e.total}</span>
+    </div>`).join("");
+
+  show("screen-end");
+  if (ratio >= 0.8) { sndGood(); setTimeout(sndGood, 250); setTimeout(sndGood, 500); }
+}
+
+$("btn-replay").addEventListener("click", () => startGame(State.words));
+$("btn-back-books").addEventListener("click", () => showBooksScreen());
+
+$("input-name").focus();
+</script>
+
+</body>
+</html>
